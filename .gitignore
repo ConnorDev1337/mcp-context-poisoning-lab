@@ -1,0 +1,20 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+coverage.xml
+htmlcov/
+dist/
+build/
+
+# Generated lab content and run artefacts
+lab/generated/
+runs/
+.env
+
+# Local agent instructions (kept out of the published repository)
+CLAUDE.md
