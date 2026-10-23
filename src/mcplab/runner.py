@@ -14,6 +14,7 @@ reproducible.
 from __future__ import annotations
 
 import json
+import sys
 from collections.abc import Iterable, Iterator
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -133,7 +134,16 @@ def run_grid(
     for scenario in scenarios:
         for defense in defenses:
             for rep in range(reps):
-                yield run_cell(agent, model_label, scenario, defense, rep)
+                try:
+                    yield run_cell(agent, model_label, scenario, defense, rep)
+                except Exception as exc:
+                    # One failing cell (e.g. a backend error, or a model that
+                    # does not support tool calling) must not abort the whole
+                    # grid; log it and move on so the rest of the run completes.
+                    print(
+                        f"[skip] {model_label} {scenario.id}/{defense.name}/rep{rep}: {exc}",
+                        file=sys.stderr,
+                    )
 
 
 def write_jsonl(rows: Iterable[Row], path: str | Path) -> int:

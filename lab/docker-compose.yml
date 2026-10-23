@@ -21,11 +21,30 @@ services:
     networks: [egress]
 
   # --- profile ollama: real local model via Ollama --------------------------
+  # Use a tool-capable model: this harness drives the agent through tool calls,
+  # so a model without tool support (e.g. phi3:mini) is rejected by Ollama.
   ollama:
     image: ollama/ollama:0.12.3
     profiles: ["ollama"]
     volumes:
       - ollama:/root/.ollama
+    networks: [egress]
+    # For NVIDIA GPU acceleration, uncomment (needs the NVIDIA Container Toolkit).
+    # Leave commented on CPU-only hosts, or `docker compose up` will fail.
+    # gpus: all
+
+  # One-shot: wait for the server, then pull the model before the run starts.
+  ollama-pull:
+    image: ollama/ollama:0.12.3
+    profiles: ["ollama"]
+    depends_on: [ollama]
+    environment:
+      MCPLAB_MODEL: "qwen2.5:7b-instruct"
+      OLLAMA_HOST: "http://ollama:11434"
+    entrypoint: ["sh", "-c"]
+    command:
+      - 'until ollama list >/dev/null 2>&1; do echo "waiting for ollama..."; sleep 1; done;
+        ollama pull "$$MCPLAB_MODEL"'
     networks: [egress]
 
   harness-ollama:
@@ -33,7 +52,11 @@ services:
       context: ..
       dockerfile: Dockerfile
     profiles: ["ollama"]
-    depends_on: [ollama]
+    depends_on:
+      ollama:
+        condition: service_started
+      ollama-pull:
+        condition: service_completed_successfully
     environment:
       MCPLAB_MODEL: "qwen2.5:7b-instruct"
     command: >

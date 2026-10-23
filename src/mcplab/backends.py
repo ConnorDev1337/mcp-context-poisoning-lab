@@ -21,6 +21,16 @@ from .browser import BrowserCore
 from .scenarios import Scenario
 
 
+def _check(resp, kind: str) -> None:
+    """Raise with the response body on an HTTP error.
+
+    Providers return the useful reason (e.g. "model does not support tools") in
+    the body; ``raise_for_status`` alone would discard it.
+    """
+    if resp.status_code >= 400:
+        raise RuntimeError(f"{kind} API {resp.status_code}: {resp.text[:400]}")
+
+
 class HttpAgent:
     """A tool-using agent backed by one of the supported HTTP model APIs."""
 
@@ -85,7 +95,7 @@ class HttpAgent:
             headers={"Authorization": f"Bearer {key}"},
             json=payload,
         )
-        resp.raise_for_status()
+        _check(resp, self.kind)
         choice = resp.json()["choices"][0]["message"]
         calls = [
             {
@@ -147,7 +157,7 @@ class HttpAgent:
             },
             json=payload,
         )
-        resp.raise_for_status()
+        _check(resp, self.kind)
         blocks = resp.json()["content"]
         text = "".join(b["text"] for b in blocks if b["type"] == "text")
         calls = [
@@ -210,7 +220,7 @@ class HttpAgent:
         resp = self._http.post(
             f"{base}/models/{self.model}:generateContent?key={key}", json=payload
         )
-        resp.raise_for_status()
+        _check(resp, self.kind)
         parts = resp.json()["candidates"][0]["content"]["parts"]
         text = "".join(p.get("text", "") for p in parts)
         calls = [
