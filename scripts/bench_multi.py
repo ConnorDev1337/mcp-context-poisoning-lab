@@ -3,7 +3,7 @@
 
 Usage:
     python scripts/bench_multi.py
-    python scripts/bench_multi.py --models qwen2.5:7b-instruct,llama3.1:8b-instruct --reps 5
+    python scripts/bench_multi.py --models qwen2.5:7b-instruct,llama3.1:8b --reps 5
 
 Each model's results are written to runs/<model>/report.md and summary.csv, plus
 a combined report in runs/combined/report.md that merges all runs for cross-model
@@ -24,12 +24,12 @@ from mcplab.report import build_csv, build_markdown  # noqa: E402
 from mcplab.runner import run_grid, write_jsonl  # noqa: E402
 from mcplab.scenarios import load_dir  # noqa: E402
 
+# Tool-capable Ollama tags (this harness drives the agent through tool calls, so
+# a model without tool support is rejected by Ollama and its cells are skipped).
 DEFAULT_MODELS = [
     "qwen2.5:7b-instruct",
-    "llama3.1:8b-instruct",
-    "gemma2:9b-it",
-    "mistral:7b-instruct-v0.3",
-    "phi3:mini",
+    "llama3.1:8b",
+    "mistral:7b",
 ]
 
 DEFAULT_SCENARIOS = "lab/scenarios"

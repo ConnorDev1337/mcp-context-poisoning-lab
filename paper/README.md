@@ -297,7 +297,7 @@ docker compose -f lab/docker-compose.yml --profile ollama up --build
 # Or multi-model comparison:
 docker compose -f lab/docker-compose.yml run --rm harness \
   python scripts/bench_multi.py \
-    --models qwen2.5:7b-instruct,llama3.1:8b-instruct \
+    --models qwen2.5:7b-instruct,llama3.1:8b \
     --reps 10 --out /runs
 ```
 

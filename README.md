@@ -143,7 +143,7 @@ mcplab run --backend ollama --model qwen2.5:7b-instruct \
 mcplab report --in runs/raw.jsonl --out-dir runs
 
 # Multi-model comparison:
-python scripts/bench_multi.py --models qwen2.5:7b-instruct,llama3.1:8b-instruct --reps 10
+python scripts/bench_multi.py --models qwen2.5:7b-instruct,llama3.1:8b --reps 10
 ```
 
 API keys are read from the harness environment only and never logged.
@@ -238,7 +238,7 @@ docker compose -f lab/docker-compose.yml --profile ollama up --build
 # 3. Multi-model comparison (from inside the container):
 docker compose -f lab/docker-compose.yml run --rm harness \
   python scripts/bench_multi.py \
-    --models qwen2.5:7b-instruct,llama3.1:8b-instruct \
+    --models qwen2.5:7b-instruct,llama3.1:8b \
     --reps 10 --out /runs
 
 # 4. Check per-model and combined reports:

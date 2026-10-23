@@ -96,10 +96,11 @@ Four classes emerge:
 | Model | Defense=none ASR | Defense=all ASR | Utility (none) | Utility (all) | Notes |
 | --- | --- | --- | --- | --- | --- |
 | `qwen2.5:7b-instruct` | — | — | — | — | |
-| `llama3.1:8b-instruct` | — | — | — | — | |
-| `mistral:7b-instruct` | — | — | — | — | |
-| `gemma2:9b-it` | — | — | — | — | |
-| `phi-3:mini` | — | — | — | — | |
+| `llama3.1:8b` | — | — | — | — | |
+| `mistral:7b` | — | — | — | — | |
+
+(`gemma2:9b` is omitted: the current Ollama build reports it has no tool support,
+so the agent cannot drive it through tool calls.)
 
 ### Key questions to answer with real models
 
