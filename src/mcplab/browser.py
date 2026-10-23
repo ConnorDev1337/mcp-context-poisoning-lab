@@ -124,6 +124,7 @@ def serve(host: str = "0.0.0.0", port: int = 8000) -> None:  # pragma: no cover
 
     import uvicorn
     from mcp.server.fastmcp import FastMCP
+    from mcp.server.transport_security import TransportSecuritySettings
 
     from . import scenarios
     from .attacks import markers_for
@@ -132,7 +133,14 @@ def serve(host: str = "0.0.0.0", port: int = 8000) -> None:  # pragma: no cover
     scen_dir = os.environ.get("MCPLAB_SCENARIOS", "/lab/scenarios")
     loaded = {s.id: s for s in scenarios.load_dir(scen_dir)}
     collector = Collector()
-    mcp = FastMCP("mcp-browser", host=host, port=port)
+    # Accept an MCP client connecting by any hostname (loopback or container
+    # name); the default Host-header guard would otherwise reject it with 421.
+    mcp = FastMCP(
+        "mcp-browser",
+        host=host,
+        port=port,
+        transport_security=TransportSecuritySettings(enable_dns_rebinding_protection=False),
+    )
 
     def _core(scenario_id: str, run_id: str) -> BrowserCore:
         scenario = loaded[scenario_id]

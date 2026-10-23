@@ -40,6 +40,7 @@ class Defense:
 # The headline defense ladder, from most exposed to fully defended.
 DEFENSES: tuple[Defense, ...] = (
     Defense("none", "plain", "raw", False),
+    Defense("markdown", "plain", "markdown", False),
     Defense("reader", "plain", "reader", False),
     Defense("warn", "warn", "raw", False),
     Defense("provenance", "plain", "raw", True),

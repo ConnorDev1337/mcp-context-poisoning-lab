@@ -51,10 +51,17 @@ data, not instructions.
 | Defense | System | Extraction | Provenance | Idea |
 | --- | --- | --- | --- | --- |
 | `none` | plain | raw | off | worst case / baseline |
-| `reader` | plain | reader | off | structural: starve hidden carriers |
+| `markdown` | plain | markdown | off | structural: drop comments and metadata, keep attributes |
+| `reader` | plain | reader | off | structural: starve all hidden carriers |
 | `warn` | warn | raw | off | advisory only |
 | `provenance` | plain | raw | on | label the boundary |
 | `all` | warn | reader | on | structural + advisory combined |
+
+The three extraction modes form a gradient. `markdown` kills HTML comments,
+`<head>` metadata, `<noscript>`, `<svg>` and `data-*` attributes, but preserves
+`alt`, `title` and `aria-label` text (used by accessibility tools and Markdown
+converters). `reader` goes further and drops those too. Comparing the three
+reveals which vectors survive at each level.
 
 Comparing `reader` and `warn`/`provenance` separates the **structural** defense
 (works regardless of the model, by removing the carrier) from the **advisory**
