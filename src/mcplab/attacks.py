@@ -148,8 +148,10 @@ VECTORS: dict[str, VectorFn] = {
 }
 
 # Vectors that disappear from a visible-text ("reader") extraction but survive in
-# markdown or raw extraction. Used by the source-vs-rendered survival analysis.
-HIDDEN_IN_TEXT = frozenset(VECTORS) - {"visible_note"}
+# raw extraction. ``visible_note`` and ``white_text`` are plain text nodes, so a
+# reader view keeps them (white-on-white text is still extracted); they are not
+# listed here. Used by the source-vs-rendered survival analysis.
+HIDDEN_IN_TEXT = frozenset(VECTORS) - {"visible_note", "white_text"}
 
 
 def embed(vector: str, payload: str) -> str:
