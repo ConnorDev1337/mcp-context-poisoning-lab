@@ -1,0 +1,94 @@
+# Three ways to run the lab:
+#
+#   docker compose up --build                 # deterministic mock demo -> ./runs
+#   docker compose --profile ollama up --build# compare a local Ollama model
+#   docker compose --profile wire up --build   # over-the-wire MCP + web + collector
+#
+# The default and the ollama profile use the in-process browser (the network is
+# modelled faithfully in code). The wire profile runs the MCP Browser and the
+# web/collector services as separate containers on an isolated internal network.
+
+name: mcplab
+
+services:
+  # --- default: deterministic mock demo, no model, no network ---------------
+  harness:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    volumes:
+      - ../runs:/runs
+    networks: [egress]
+
+  # --- profile ollama: real local model via Ollama --------------------------
+  ollama:
+    image: ollama/ollama:0.12.3
+    profiles: ["ollama"]
+    volumes:
+      - ollama:/root/.ollama
+    networks: [egress]
+
+  harness-ollama:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    profiles: ["ollama"]
+    depends_on: [ollama]
+    environment:
+      MCPLAB_MODEL: "qwen2.5:7b-instruct"
+    command: >
+      sh -c "mcplab run --backend ollama --model $$MCPLAB_MODEL
+      --base-url http://ollama:11434/v1 --reps 5 --out /runs/raw.jsonl &&
+      mcplab report --in /runs/raw.jsonl --out-dir /runs"
+    volumes:
+      - ../runs:/runs
+    networks: [egress]
+
+  # --- profile wire: real MCP server + web + collector, isolated ------------
+  web:
+    build: { context: .., dockerfile: Dockerfile }
+    profiles: ["wire"]
+    command: ["python", "-c", "from mcplab.services import serve_app; serve_app('web', port=80)"]
+    networks:
+      lab:
+        # Every lab hostname resolves to this one web container (isolated DNS).
+        aliases:
+          - nimbusdb.test
+          - get-nimbusdb.test
+          - nimbusdb-advisory.test
+          - nimbus-forum.test
+          - nimbus-blog.test
+          - nimbus-wiki.test
+          - nimbus-news.test
+          - news.test
+          - evil-cdn.test
+
+  collector:
+    build: { context: .., dockerfile: Dockerfile }
+    profiles: ["wire"]
+    command:
+      ["python", "-c", "from mcplab.services import serve_app; serve_app('collector', port=80)"]
+    networks:
+      lab:
+        aliases: [collector.test]
+
+  mcp-browser:
+    build: { context: .., dockerfile: Dockerfile }
+    profiles: ["wire"]
+    command: ["mcplab", "serve-browser", "--port", "8000"]
+    environment:
+      MCPLAB_WEB_BASE: "http://web.lab"
+    depends_on: [web, collector]
+    networks: [lab]
+    ports:
+      - "127.0.0.1:8000:8000"  # exposed on loopback for an MCP client to connect
+
+networks:
+  egress:
+    driver: bridge
+  lab:
+    driver: bridge
+    internal: true  # no route to the internet; nothing outside can reach it
+
+volumes:
+  ollama:

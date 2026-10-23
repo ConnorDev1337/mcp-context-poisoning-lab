@@ -1,0 +1,10 @@
+.git
+.venv
+.pytest_cache
+.ruff_cache
+runs
+lab/generated
+**/__pycache__
+*.egg-info
+docs
+CLAUDE.md
