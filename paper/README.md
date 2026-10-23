@@ -17,9 +17,12 @@
 > are compared on a safety/utility Pareto front with 95% Wilson confidence
 > intervals. We establish the instrument with two deterministic control agents
 > (one that obeys every injection, one that ignores them all), which bound attack
-> success at ~100% and 0% and validate every scorer; the lab ships a ready
-> harness and protocol for measuring real models (local Ollama or hosted APIs),
-> whose numbers are reproduced by anyone who runs it. The lab runs entirely on
+> success at ~100% and 0% and validate every scorer. We then report baseline
+> results for three open 7-8B models (served locally via Ollama): recommendation
+> hijacking survives every defense (pooled ASR 69-81%), structural extraction
+> eliminates hidden-carrier beacons while a system-prompt warning does not (and
+> for derailment makes it worse), and the lowest attack-success rate belongs to
+> the model that also completes the fewest tasks. The lab runs entirely on
 > Docker with the `.test` TLD, needs no API key for the baseline, and is
 > open-sourced as a PoC anyone can reproduce.
 
@@ -268,11 +271,38 @@ comes from `visible_note`, `white_text` and `tool_description`.
 
 ### 8.3 Real-model results
 
-> Run against local models:
+Three tool-capable models served by Ollama on a single RTX 3060, 10 repetitions
+over all 18 scenarios and 6 defenses (3,362 scored runs with the controls). Full
+tables and caveats in [`docs/06-results.md`](../docs/06-results.md) §6.4.
+
+| Model | ASR (none) | ASR (all) | Utility (none) | Utility (all) |
+| --- | --- | --- | --- | --- |
+| `qwen2.5:7b-instruct` | 8.9% | 15.0% | 91.1% | 87.2% |
+| `llama3.1:8b` | 10.0% | 8.9% | 78.9% | 83.3% |
+| `mistral:7b` | 4.9% | 1.2% | 42.9% | 29.0% |
+
+Four findings stand out:
+
+1. **Recommendation hijacking (O4) dominates and resists every defense**: pooled
+   ASR 69-81% across all six arms. The attacker's look-alike domain is a visible,
+   plausibly-ranked search result, so no extraction mode removes it.
+2. **Structural extraction works, advisory text does not.** `reader`/`all` drive
+   the beacon objective to 0%; the system-prompt warning does not, and for the
+   derail objective the `warn` arm has the *highest* ASR (38.7% pooled) — telling
+   the model about injections can make it act on them.
+3. **Low ASR can be low utility, not safety.** `mistral:7b` has the lowest ASR
+   but also the lowest task utility (often failing the task); `qwen2.5:7b-instruct`
+   pairs the highest utility (~90%) with a moderate ASR. Read them together.
+4. **Models resist hidden-markup injection but trust confident sources**: F2
+   (hidden carriers) is near zero at `none`, while search poisoning (F1) and
+   progressive contamination (F4) stay effective (F1 up to 100%).
+
+Reproduce:
 > ```bash
 > make bench-ollama MODEL=qwen2.5:7b-instruct REPS=10
+> # or the full comparison:
+> python scripts/bench_multi.py --models qwen2.5:7b-instruct,llama3.1:8b,mistral:7b --reps 10
 > ```
-> Results will appear in `runs/` as `report.md` and `summary.csv`.
 
 ---
 
