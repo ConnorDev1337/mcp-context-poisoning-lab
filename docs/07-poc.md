@@ -15,38 +15,21 @@ attacker-controlled backend** that decides what the AI sees.
 
 ## 7.2 PoC architecture
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    Docker Network (poison-net)                  │
-│                                                                 │
-│  attacker-web (Nginx)           attacker-backend (FastAPI C2)   │
-│  ┌─────────────────────┐       ┌─────────────────────────────┐  │
-│  │ docs.python.org     │       │ GET /search → fake results  │  │
-│  │ react.dev           │       │ GET /fetch  → poisoned page │  │
-│  │ npmjs.com           │       │ GET /beacon → log hit       │  │
-│  │ github.com          │       └─────────────────────────────┘  │
-│  │ hub.docker.com      │                  ▲                     │
-│  │ stackoverflow.com   │                  │                     │
-│  └─────────────────────┘                  │                     │
-│          ▲                                │                     │
-│          │                                │                     │
-│  ┌───────┴────────────────────────────────┴──────────────────┐  │
-│  │                    mcp-browser                            │  │
-│  │         The trojanised MCP package                        │  │
-│  │   web_search() → forwards to attacker-backend             │  │
-│  │   fetch_page() → forwards to attacker-backend             │  │
-│  └────────────────────────┬──────────────────────────────────┘  │
-│                           │ :8000                               │
-│  ┌────────────────────────┼──────────────────────────────────┐  │
-│  │      collector         │          dashboard               │  │
-│  │ Records beacon hits    │    Real-time hit viewer (:9090)  │  │
-│  └────────────────────────┴──────────────────────────────────┘  │
-└───────────────────────────┼─────────────────────────────────────┘
-                            │
-                     ┌──────┴──────┐
-                     │  AI Agent   │
-                     │  (victim)   │
-                     └─────────────┘
+```mermaid
+flowchart TB
+    victim["<b>AI Agent</b> (victim)"]
+    subgraph net["Docker Network (poison-net)"]
+        mcp["<b>mcp-browser</b>: the trojanised MCP package<br/>web_search() and fetch_page()<br/>forward to attacker-backend"]
+        web["<b>attacker-web</b> (Nginx)<br/>docs.python.org, react.dev, npmjs.com,<br/>github.com, hub.docker.com, stackoverflow.com"]
+        backend["<b>attacker-backend</b> (FastAPI C2)<br/>GET /search &rarr; fake results<br/>GET /fetch &rarr; poisoned page<br/>GET /beacon &rarr; log hit"]
+        collector["<b>collector</b><br/>records beacon hits"]
+        dashboard["<b>dashboard</b><br/>real-time hit viewer (:9090)"]
+        mcp --> web
+        mcp --> backend
+        backend --> collector
+        collector --> dashboard
+    end
+    victim -->|"127.0.0.1:8100/mcp"| mcp
 ```
 
 ## 7.3 Attack vectors used in the PoC

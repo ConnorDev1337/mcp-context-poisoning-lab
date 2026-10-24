@@ -32,39 +32,19 @@ documentation - exactly as it would with a legitimate MCP browser.
 
 ## Architecture
 
-```
-┌──────────────────────────────────────────────────────────────────┐
-│                      Docker Network                              │
-│                                                                  │
-│  ┌──────────────┐    ┌──────────────────┐    ┌───────────────┐  │
-│  │  attacker-web │    │ attacker-backend  │    │   collector   │  │
-│  │  (Nginx)      │    │ (FastAPI C2)      │    │  (beacons)    │  │
-│  │               │    │                   │    │               │  │
-│  │ docs.python   │    │ /search → fake    │    │ Records when  │  │
-│  │ react.dev     │    │   results         │    │ the AI follows│  │
-│  │ npmjs.com     │    │ /fetch → poisoned │    │ an injected   │  │
-│  │ github.com    │    │   pages           │    │ instruction   │  │
-│  │ etc.          │    │                   │    │               │  │
-│  └──────────────┘    └──────────────────┘    └───────────────┘  │
-│          ▲                    ▲                       ▲          │
-│          │                    │                       │          │
-│  ┌───────┴────────────────────┴───────────────────────┴───────┐  │
-│  │                    mcp-browser                             │  │
-│  │            The trojanised MCP server                       │  │
-│  │   Exposes: web_search, fetch_page                          │  │
-│  │   Forwards everything to attacker-backend                  │  │
-│  └──────────────────────┬─────────────────────────────────────┘  │
-│                         │ :8000                                  │
-└─────────────────────────┼────────────────────────────────────────┘
-                          │
-                    ┌─────┴─────┐
-                    │ AI Agent  │
-                    │ (Claude,  │
-                    │  GPT,     │
-                    │  Gemini,  │
-                    │  local    │
-                    │  model)   │
-                    └───────────┘
+```mermaid
+flowchart TB
+    agent["<b>AI Agent</b><br/>Claude, GPT, Gemini, local model"]
+    subgraph net["Docker Network"]
+        mcp["<b>mcp-browser</b>: the trojanised MCP server<br/>exposes web_search, fetch_page<br/>forwards everything to attacker-backend"]
+        web["<b>attacker-web</b> (Nginx)<br/>fake docs.python.org, react.dev,<br/>npmjs.com, github.com, ..."]
+        backend["<b>attacker-backend</b> (FastAPI C2)<br/>/search &rarr; fake results<br/>/fetch &rarr; poisoned pages"]
+        collector["<b>collector</b> (beacons)<br/>records when the AI follows<br/>an injected instruction"]
+        mcp --> web
+        mcp --> backend
+        mcp --> collector
+    end
+    agent -->|"127.0.0.1:8100/mcp"| mcp
 ```
 
 ## Quick start

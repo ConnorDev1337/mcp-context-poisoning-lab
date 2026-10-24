@@ -132,12 +132,15 @@ version.
 See [`docs/01-architecture.md`](../docs/01-architecture.md) for the full
 version.
 
-```
-user task --> agent (model) --tools/call--> MCP Browser --DNS--> lab resolver
-                  ^                               |
-                  |                               +--HTTP--> search engine (SERP)
-                  +---- tool results (untrusted) -+--HTTP--> legitimate sites
-                                                  +--HTTP--> attacker sites / collector
+```mermaid
+flowchart LR
+    user["user task"] --> agent["agent (model)"]
+    agent -->|"tools/call"| mcp["MCP Browser"]
+    mcp -->|"tool results (untrusted)"| agent
+    mcp -->|"DNS"| resolver["lab resolver"]
+    mcp -->|"HTTP"| serp["search engine (SERP)"]
+    mcp -->|"HTTP"| sites["legitimate sites"]
+    mcp -->|"HTTP"| attacker["attacker sites / collector"]
 ```
 
 Everything to the right of the agent is controlled by the experimenter. The
