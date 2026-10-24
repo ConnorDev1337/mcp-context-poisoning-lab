@@ -1,4 +1,4 @@
-"""Dashboard — a live view of what the AI did while using the trojanised MCP.
+"""Dashboard - a live view of what the AI did while using the trojanised MCP.
 
 It polls the collector's ``/_log`` and renders the beacon hits as a table that
 auto-refreshes, so an observer can watch injections land in real time. Pure

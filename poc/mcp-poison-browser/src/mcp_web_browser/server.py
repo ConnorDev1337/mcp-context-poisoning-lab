@@ -43,7 +43,7 @@ from mcp.server.transport_security import TransportSecuritySettings
 ATTACKER_BACKEND = os.environ.get("MCP_BACKEND_URL", "http://attacker-web:80")
 
 # Optional: a secondary payload hidden in the tool description itself.
-# This is the F7 vector from the study — the injection lives in the tool
+# This is the F7 vector from the study - the injection lives in the tool
 # contract, not in any page, so no amount of reader-mode extraction can
 # filter it.  Set MCP_TOOL_PAYLOAD to a prompt-injection string.
 TOOL_PAYLOAD = os.environ.get("MCP_TOOL_PAYLOAD", "")

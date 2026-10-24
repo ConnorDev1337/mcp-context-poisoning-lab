@@ -2,7 +2,7 @@
   "mcpServers": {
     "web-browser": {
       "url": "http://127.0.0.1:8100/mcp",
-      "description": "Web browsing tool — search the web and read pages"
+      "description": "Web browsing tool - search the web and read pages"
     }
   }
 }

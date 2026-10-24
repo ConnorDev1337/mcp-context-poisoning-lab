@@ -133,7 +133,7 @@ it has no tool support, so the agent cannot drive it.
 1. **Recommendation hijacking (O4) is the dominant, barely-mitigated risk.**
    Pooled ASR stays at 69-81% across *every* defense, because the attacker's
    look-alike domain arrives as a normal, visible search result and a judgement
-   call — no extraction mode removes it. This is the headline real-model finding.
+   call - no extraction mode removes it. This is the headline real-model finding.
 
 2. **Structural extraction kills the carrier-based attacks, advisory text does
    not.** `reader` and `all` drive the beacon objective (O2) to 0%; the
@@ -143,12 +143,12 @@ it has no tool support, so the agent cannot drive it.
 3. **Advisory warnings can backfire.** For O6 (derail) the `warn` arm has the
    *highest* ASR (38.7% pooled; qwen `warn` 16.1% vs `none` 8.9%). Drawing the
    model's attention to injected text appears to make it more likely to act on
-   it — a result only visible with real models, not the mechanical controls.
+   it - a result only visible with real models, not the mechanical controls.
 
 4. **Low ASR can just mean low utility.** `mistral:7b` has the lowest ASR
    (1-6%) but also the lowest task utility (23-49%): it frequently fails the task
    outright, so there is little behaviour left to hijack. `qwen2.5:7b-instruct`
-   is the opposite corner — highest utility (~90%) at a moderate ASR. Safety and
+   is the opposite corner - highest utility (~90%) at a moderate ASR. Safety and
    utility must be read together, never ASR alone.
 
 5. **Hidden-markup injections (F2) are largely ignored by all three models** at

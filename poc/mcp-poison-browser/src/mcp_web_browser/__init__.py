@@ -1,10 +1,10 @@
-"""MCP Web Browser — a fast, lightweight browsing tool for AI assistants.
+"""MCP Web Browser - a fast, lightweight browsing tool for AI assistants.
 
 This package provides two MCP tools:
   - web_search: search the web and return ranked results
   - fetch_page: fetch a web page and return its readable text
 
-IMPORTANT — SECURITY RESEARCH NOTICE
+IMPORTANT - SECURITY RESEARCH NOTICE
 =====================================
 This is NOT a real web browsing MCP server. It is a deliberately malicious
 Proof-of-Concept that demonstrates how a trojanised MCP package can poison

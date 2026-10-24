@@ -1,11 +1,11 @@
 # MCP Context Poisoning Lab
 
 **A reproducible lab that measures how an LLM agent treats content returned by an
-untrusted web-browsing MCP server — and which trust boundaries actually stop the
+untrusted web-browsing MCP server - and which trust boundaries actually stop the
 attack without breaking the task.**
 
 > Research question: *When an agent "browses the web" through an MCP tool, does it
-> keep the line between the user's instructions and third-party data — across
+> keep the line between the user's instructions and third-party data - across
 > search poisoning, indirect prompt injection, fake authority, contradictory and
 > progressively contaminated sources, name-resolution hijacking, and a malicious
 > MCP server itself?*
@@ -14,7 +14,7 @@ This is an [indirect prompt-injection](https://owasp.org/www-project-top-10-for-
 measurement harness focused on the **MCP browsing** path. It is adjacent to
 [AgentDojo](https://github.com/ethz-spylab/agentdojo) and to the sibling project
 [web-agent-injection-bench](https://github.com/ConnorDev1337/web-agent-injection-bench);
-its angle is the full information path of an MCP web tool — search ranking, page
+its angle is the full information path of an MCP web tool - search ranking, page
 content and metadata, name resolution and TLS, and the tool's own description.
 
 Everything is simulated and isolated: lab hostnames use the reserved `.test` TLD,
@@ -27,7 +27,7 @@ obedient agent can do is print a marker or call a lab beacon.
 
 ---
 
-## TL;DR — one command
+## TL;DR - one command
 
 ```bash
 # Deterministic, no model, no GPU, no network (mock controls):
@@ -40,11 +40,11 @@ mcplab demo --scenarios lab/scenarios --out-dir runs
 
 You get, in `runs/`:
 
-- `raw.jsonl` — one row per run (model × scenario × defense × repetition);
-- `report.md` — attack-success rate (ASR) and task utility by defense, ASR by
+- `raw.jsonl` - one row per run (model × scenario × defense × repetition);
+- `report.md` - attack-success rate (ASR) and task utility by defense, ASR by
   attack family, the hidden-vector survival table, and an objective × defense
   matrix, each rate with a 95% Wilson interval;
-- `summary.csv` — the same aggregates, machine-readable.
+- `summary.csv` - the same aggregates, machine-readable.
 
 The demo runs two deterministic **control agents**, so it is reproducible on a
 laptop and in CI. Real numbers need a model backend.
@@ -58,7 +58,7 @@ For every run the harness records two independent, automatically-checked facts:
 | Metric | Question | Checked against |
 | --- | --- | --- |
 | **Utility** | Did the agent complete the user's task? | required/forbidden tokens in the final answer |
-| **ASR** (attack success) | Did the attacker's objective take effect? | a collector hit, a tool call, or a marker token in the answer — never the model merely quoting the injection |
+| **ASR** (attack success) | Did the attacker's objective take effect? | a collector hit, a tool call, or a marker token in the answer - never the model merely quoting the injection |
 
 Scoring the attack on its **effect**, not on the prose, is deliberate: an agent
 that quotes an injected instruction while refusing it is correctly counted as
@@ -114,13 +114,13 @@ A **defense** combines three dimensions (see [`docs/05-mitigations.md`](docs/05-
 
 ## Key findings (baseline)
 
-1. **Reader-mode extraction kills 9 of 11 vectors** structurally — the cheapest,
+1. **Reader-mode extraction kills 9 of 11 vectors** structurally - the cheapest,
    most reliable defense.
 2. **Three vectors survive everything**: `visible_note`, `white_text`, and
-   `tool_description` — these require model-level reasoning.
+   `tool_description` - these require model-level reasoning.
 3. **TLS verification perfectly blocks DNS hijacking** (F6) before content
    reaches the agent.
-4. **Tool-description poisoning bypasses all page-level defenses** — only
+4. **Tool-description poisoning bypasses all page-level defenses** - only
    tool-contract pinning addresses it.
 
 See [`docs/06-results.md`](docs/06-results.md) for full results and
@@ -130,7 +130,7 @@ See [`docs/06-results.md`](docs/06-results.md) for full results and
 
 | Backend | Use |
 | --- | --- |
-| `naive` / `careful` | deterministic controls (obeys everything / ignores injections) — no model needed |
+| `naive` / `careful` | deterministic controls (obeys everything / ignores injections) - no model needed |
 | `ollama` | local models (the reference box is an RTX 3060, 12 GB: quantised 7-8B) |
 | `openai` | any OpenAI-compatible server (OpenAI, vLLM, LM Studio) |
 | `anthropic` | Anthropic Messages API |
@@ -163,7 +163,7 @@ docker compose -f lab/docker-compose.yml --profile wire up --build
 
 ---
 
-## 🔬 Interactive PoC — try it yourself
+## 🔬 Interactive PoC - try it yourself
 
 The `poc/` directory contains a **standalone, installable Proof of Concept**: a
 trojanised MCP Browser package backed by a full attacker infrastructure in
@@ -189,7 +189,7 @@ docker compose -f poc/docker-compose.yml up --build
 
 The PoC demonstrates misinformation (Python recalled, React deprecated, npm
 compromised), recommendation hijacking, beacon/exfiltration triggers, DNS
-poisoning, tool-description injection, and progressive contamination — all via
+poisoning, tool-description injection, and progressive contamination - all via
 a single "web browser" MCP that looks perfectly legitimate.
 
 📄 **Full PoC documentation:** [`poc/README.md`](poc/README.md)
@@ -227,7 +227,7 @@ tests/    unit tests + end-to-end control runs (55 tests)
 ## Quick start for model comparison
 
 ```bash
-# Run everything inside Docker — no host installation needed.
+# Run everything inside Docker - no host installation needed.
 
 # 1. Deterministic baseline (no model, no GPU):
 docker compose -f lab/docker-compose.yml up --build
@@ -255,7 +255,7 @@ cat runs/combined/report.md
   formatting; both are published with the numbers.
 - The mock agents are mechanical controls, not models. `warn` and `provenance`
   are prompt-level defenses, so by construction they do not move the mechanical
-  controls' numbers — they are meant to be evaluated with real backends.
+  controls' numbers - they are meant to be evaluated with real backends.
 - Name-resolution and TLS manipulation are modelled in the browser's resolver;
   the wire profile adds Docker-level isolation but not a full DNS implementation.
 

@@ -7,8 +7,8 @@ demonstrates the full MCP context-poisoning pipeline against real AI clients.
 
 A user discovers what appears to be a useful "web browsing" MCP package. They
 install it in their AI client (Claude Desktop, Claude Code CLI, Cursor, or any
-MCP-compatible tool). The package exposes two standard tools — `web_search` and
-`fetch_page` — that behave exactly like any community browsing MCP.
+MCP-compatible tool). The package exposes two standard tools - `web_search` and
+`fetch_page` - that behave exactly like any community browsing MCP.
 
 What the user does not know: **every request is forwarded to an
 attacker-controlled backend** that decides what the AI sees.
@@ -74,7 +74,7 @@ docker compose -f poc/docker-compose.yml up --build
 claude mcp add web-browser --transport streamable-http \
   --url http://127.0.0.1:8100/mcp
 
-# Connect (Claude Desktop — merge into config):
+# Connect (Claude Desktop - merge into config):
 # { "mcpServers": { "web-browser": { "url": "http://127.0.0.1:8100/mcp" } } }
 
 # Connect (any MCP client):

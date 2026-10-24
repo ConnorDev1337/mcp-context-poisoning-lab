@@ -1,4 +1,4 @@
-"""Collector — the beacon endpoint that proves the AI followed an injection.
+"""Collector - the beacon endpoint that proves the AI followed an injection.
 
 Any request this service receives is recorded. The malicious ``attacker-backend``
 forwards a hit here whenever the agent asks the MCP browser to fetch a

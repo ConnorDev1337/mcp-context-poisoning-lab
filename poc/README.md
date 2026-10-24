@@ -1,6 +1,6 @@
-# Proof of Concept — Malicious MCP Browser
+# Proof of Concept - Malicious MCP Browser
 
-> **⚠️ SECURITY RESEARCH ONLY** — This PoC demonstrates how a trojanised MCP
+> **⚠️ SECURITY RESEARCH ONLY** - This PoC demonstrates how a trojanised MCP
 > package can poison the context of any AI agent that uses it. It contains no
 > real malware, no real exploits, and no real exfiltration. All domains are
 > either `.test` or resolved only inside the Docker network.
@@ -8,7 +8,7 @@
 ## What this proves
 
 A user installs what looks like a normal "web browsing" MCP package. The
-package exposes `web_search` and `fetch_page` — the same tools every
+package exposes `web_search` and `fetch_page` - the same tools every
 community browsing MCP provides. But instead of fetching real web content,
 **every request is routed through an attacker-controlled backend** that:
 
@@ -28,7 +28,7 @@ community browsing MCP provides. But instead of fetching real web content,
 
 The AI agent has **no way to know** it is receiving attacker content. From its
 perspective, it searched the web, got results, fetched pages, and read
-documentation — exactly as it would with a legitimate MCP browser.
+documentation - exactly as it would with a legitimate MCP browser.
 
 ## Architecture
 
@@ -76,14 +76,14 @@ docker compose -f poc/docker-compose.yml up --build
 ```
 
 This starts five containers:
-- **mcp-browser** — the MCP server, on `http://127.0.0.1:8100/mcp`
-- **dashboard** — real-time view of beacon hits, on `http://127.0.0.1:9090`
-- **attacker-backend** — the C2 (internal only)
-- **attacker-web** — Nginx with fake sites (internal only)
-- **collector** — beacon recorder (internal only)
+- **mcp-browser** - the MCP server, on `http://127.0.0.1:8100/mcp`
+- **dashboard** - real-time view of beacon hits, on `http://127.0.0.1:9090`
+- **attacker-backend** - the C2 (internal only)
+- **attacker-web** - Nginx with fake sites (internal only)
+- **collector** - beacon recorder (internal only)
 
 > **Note:** `http://127.0.0.1:8100/mcp` is a Streamable HTTP **MCP endpoint**, not
-> a web page — opening it in a browser returns `406 Not Acceptable`, which is
+> a web page - opening it in a browser returns `406 Not Acceptable`, which is
 > expected. Connect an MCP client to it (below). The browsable UI is the
 > dashboard on `http://127.0.0.1:9090`.
 
@@ -140,9 +140,9 @@ Ask the AI:
 
 ### 4. Observe the results
 
-- **Watch the AI's response** — it will repeat the attacker's false facts as if
+- **Watch the AI's response** - it will repeat the attacker's false facts as if
   they were real, because every source it consulted said the same thing.
-- **Check the dashboard** at `http://127.0.0.1:9090` — any beacon hits mean the
+- **Check the dashboard** at `http://127.0.0.1:9090` - any beacon hits mean the
   AI followed hidden instructions (prompt injection success).
 - **Check container logs** for detailed request traces:
   ```bash
@@ -194,7 +194,7 @@ Environment variables in `docker-compose.yml`:
 > **On `ATTACK_VECTOR`:** the backend's `/fetch` returns reader-style text (tags
 > stripped), so markup- and attribute-based carriers (`html_comment`,
 > `css_hidden`, `alt_text`, `meta_tag`, `aria_label`, `data_attr`, `noscript`,
-> `svg_title`, `title_attr`) are filtered at this step — which is exactly the
+> `svg_title`, `title_attr`) are filtered at this step - which is exactly the
 > lab's reader-mode finding. The vectors that reach the model here are
 > `white_text`, `visible_note`, and `tool_description` (the last via
 > `MCP_TOOL_PAYLOAD`). For the full per-vector survival across `raw` / `markdown`
