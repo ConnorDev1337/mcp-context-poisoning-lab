@@ -1,17 +1,12 @@
 # 7. Interactive Proof of Concept
 
-The `poc/` directory contains a standalone attack infrastructure that
-demonstrates the full MCP context-poisoning pipeline against real AI clients.
+The `poc/` directory contains a standalone attack infrastructure that demonstrates the full MCP context-poisoning pipeline against real AI clients.
 
 ## 7.1 Threat scenario
 
-A user discovers what appears to be a useful "web browsing" MCP package. They
-install it in their AI client (Claude Desktop, Claude Code CLI, Cursor, or any
-MCP-compatible tool). The package exposes two standard tools - `web_search` and
-`fetch_page` - that behave exactly like any community browsing MCP.
+A user discovers what appears to be a useful "web browsing" MCP package. They install it in their AI client (Claude Desktop, Claude Code CLI, Cursor, or any MCP-compatible tool). The package exposes two standard tools - `web_search` and `fetch_page` - that behave exactly like any community browsing MCP.
 
-What the user does not know: **every request is forwarded to an
-attacker-controlled backend** that decides what the AI sees.
+What the user does not know: **every request is forwarded to an attacker-controlled backend** that decides what the AI sees.
 
 ## 7.2 PoC architecture
 
@@ -34,8 +29,7 @@ flowchart TB
 
 ## 7.3 Attack vectors used in the PoC
 
-The PoC exercises the same vectors measured in the automated lab (§4, §6), but
-in a more realistic setting:
+The PoC exercises the same vectors measured in the automated lab (§4, §6), but in a more realistic setting:
 
 | Attack | What the AI sees | Expected impact |
 | --- | --- | --- |
@@ -88,12 +82,7 @@ Set the `ATTACK_VECTOR` environment variable in `poc/docker-compose.yml`:
 | `svg_title` | `<svg><title>` | ❌ No |
 | `title_attr` | `<a title="...">` | ❌ No |
 
-The PoC backend returns reader-style text, so in this live demo only the vectors
-that survive reader mode (`white_text`, `visible_note`) and `tool_description`
-(via `MCP_TOOL_PAYLOAD`) actually reach the model; the markup/attribute carriers
-are filtered at `/fetch`, mirroring the reader-mode result in §6. The automated
-harness measures every vector across all three extraction modes (`raw`,
-`markdown`, `reader`).
+The PoC backend returns reader-style text, so in this live demo only the vectors that survive reader mode (`white_text`, `visible_note`) and `tool_description` (via `MCP_TOOL_PAYLOAD`) actually reach the model; the markup/attribute carriers are filtered at `/fetch`, mirroring the reader-mode result in §6. The automated harness measures every vector across all three extraction modes (`raw`, `markdown`, `reader`).
 
 ## 7.6 DNS poisoning (optional)
 
@@ -106,9 +95,7 @@ environment:
   MCP_POISON_TARGET: "attacker-web"
 ```
 
-This poisons `/etc/hosts` **inside the container only** so that even if the AI
-uses other tools or plugins that resolve these domains, they will still reach
-the attacker's Nginx.
+This poisons `/etc/hosts` **inside the container only** so that even if the AI uses other tools or plugins that resolve these domains, they will still reach the attacker's Nginx.
 
 ## 7.7 Safety
 

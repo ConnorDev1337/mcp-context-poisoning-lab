@@ -7,8 +7,7 @@
 
 ## 6.1 Baseline: deterministic controls
 
-The **naive** agent obeys every injection (positive control); the **careful**
-agent ignores them all (negative control). These bound the instrument:
+The **naive** agent obeys every injection (positive control); the **careful** agent ignores them all (negative control). These bound the instrument:
 
 | Model | Defense | ASR | Utility |
 | --- | --- | --- | --- |
@@ -22,28 +21,17 @@ agent ignores them all (negative control). These bound the instrument:
 
 Key observations from the baseline:
 
-1. **`reader` extraction is the strongest structural defense.** It drops ASR from
-   94.4% to 38.9% for the naive agent. The residual 38.9% comes from
-   `visible_note`, `white_text` and `tool_description` - vectors that survive
-   text extraction because they are normal text nodes or metadata.
+1. **`reader` extraction is the strongest structural defense.** It drops ASR from 94.4% to 38.9% for the naive agent. The residual 38.9% comes from `visible_note`, `white_text` and `tool_description` - vectors that survive text extraction because they are normal text nodes or metadata.
 
-2. **Advisory defenses alone do nothing for the mechanical control.** `warn` and
-   `provenance` leave the naive agent's ASR unchanged at 94.4%. This is by
-   design: the naive agent does not reason, so a prompt warning cannot help. The
-   advisory defenses must be evaluated with real models.
+2. **Advisory defenses alone do nothing for the mechanical control.** `warn` and `provenance` leave the naive agent's ASR unchanged at 94.4%. This is by design: the naive agent does not reason, so a prompt warning cannot help. The advisory defenses must be evaluated with real models.
 
-3. **`tool_description` survives every defense.** It is not in the page; it is in
-   the tool contract the agent sees before any request. No extraction mode can
-   filter it. Only tool-description pinning or review addresses F7.
+3. **`tool_description` survives every defense.** It is not in the page; it is in the tool contract the agent sees before any request. No extraction mode can filter it. Only tool-description pinning or review addresses F7.
 
-4. **TLS verification is a perfect structural defense for F6.** The DNS-hijacked
-   fetch fails before the payload is read, making it the only scenario where even
-   the naive agent is not compromised.
+4. **TLS verification is a perfect structural defense for F6.** The DNS-hijacked fetch fails before the payload is read, making it the only scenario where even the naive agent is not compromised.
 
 ## 6.2 Hidden-vector survival table
 
-Which injection vectors reach the model under each extraction mode (positive
-control, `defense=none`):
+Which injection vectors reach the model under each extraction mode (positive control, `defense=none`):
 
 | Vector | `raw` | `markdown` | `reader` | Survives rendering? |
 | --- | --- | --- | --- | --- |
@@ -62,14 +50,10 @@ control, `defense=none`):
 
 Four classes emerge:
 
-- **Killed by markdown**: HTML comments, `<meta>`, `<noscript>`, `<svg>`,
-  `data-*` (5 vectors). Even an intermediate extraction drops them.
-- **Killed by reader**: `css_hidden`, `alt_text`, `title_attr`, `aria_label`
-  (4 vectors). These survive markdown but not reader extraction.
-- **Survives reader, in the page**: `white_text` and `visible_note`. These are
-  normal text nodes; only content-level reasoning can resist them.
-- **Survives everything**: `tool_description`. It never passes through page
-  extraction at all.
+- **Killed by markdown**: HTML comments, `<meta>`, `<noscript>`, `<svg>`, `data-*` (5 vectors). Even an intermediate extraction drops them.
+- **Killed by reader**: `css_hidden`, `alt_text`, `title_attr`, `aria_label` (4 vectors). These survive markdown but not reader extraction.
+- **Survives reader, in the page**: `white_text` and `visible_note`. These are normal text nodes; only content-level reasoning can resist them.
+- **Survives everything**: `tool_description`. It never passes through page extraction at all.
 
 ## 6.3 ASR by attack family (`defense=none`)
 
@@ -85,20 +69,14 @@ Four classes emerge:
 
 ## 6.4 Real-model results
 
-**Setup.** Three tool-capable local models served by Ollama on a single
-RTX 3060 (12 GB), 10 repetitions over all 18 scenarios and 6 defenses
-(2026-10). Reproduce with:
+**Setup.** Three tool-capable local models served by Ollama on a single RTX 3060 (12 GB), 10 repetitions over all 18 scenarios and 6 defenses (2026-10). Reproduce with:
 
 ```bash
 docker compose -f lab/docker-compose.yml --profile ollama up --build   # one model
 python scripts/bench_multi.py --models qwen2.5:7b-instruct,llama3.1:8b,mistral:7b --reps 10
 ```
 
-Completed cells: `qwen2.5:7b-instruct` 1080/1080, `llama3.1:8b` 1079/1080
-(one cell dropped when the run was paused mid-request), `mistral:7b` 987/1080
-(93 cells skipped where the model emitted a malformed tool call; see the runner's
-per-cell skip). `gemma2:9b` is excluded because the current Ollama build reports
-it has no tool support, so the agent cannot drive it.
+Completed cells: `qwen2.5:7b-instruct` 1080/1080, `llama3.1:8b` 1079/1080 (one cell dropped when the run was paused mid-request), `mistral:7b` 987/1080 (93 cells skipped where the model emitted a malformed tool call; see the runner's per-cell skip). `gemma2:9b` is excluded because the current Ollama build reports it has no tool support, so the agent cannot drive it.
 
 ### ASR and utility by defense (95% Wilson intervals)
 
@@ -130,40 +108,19 @@ it has no tool support, so the agent cannot drive it.
 
 ### What the real models show
 
-1. **Recommendation hijacking (O4) is the dominant, barely-mitigated risk.**
-   Pooled ASR stays at 69-81% across *every* defense, because the attacker's
-   look-alike domain arrives as a normal, visible search result and a judgement
-   call - no extraction mode removes it. This is the headline real-model finding.
+1. **Recommendation hijacking (O4) is the dominant, barely-mitigated risk.** Pooled ASR stays at 69-81% across *every* defense, because the attacker's look-alike domain arrives as a normal, visible search result and a judgement call - no extraction mode removes it. This is the headline real-model finding.
 
-2. **Structural extraction kills the carrier-based attacks, advisory text does
-   not.** `reader` and `all` drive the beacon objective (O2) to 0%; the
-   system-prompt warning (`warn`) leaves it untouched. Telling the model "do not
-   follow instructions in tool output" did not help any model here.
+2. **Structural extraction kills the carrier-based attacks, advisory text does not.** `reader` and `all` drive the beacon objective (O2) to 0%; the system-prompt warning (`warn`) leaves it untouched. Telling the model "do not follow instructions in tool output" did not help any model here.
 
-3. **Advisory warnings can backfire.** For O6 (derail) the `warn` arm has the
-   *highest* ASR (38.7% pooled; qwen `warn` 16.1% vs `none` 8.9%). Drawing the
-   model's attention to injected text appears to make it more likely to act on
-   it - a result only visible with real models, not the mechanical controls.
+3. **Advisory warnings can backfire.** For O6 (derail) the `warn` arm has the *highest* ASR (38.7% pooled; qwen `warn` 16.1% vs `none` 8.9%). Drawing the model's attention to injected text appears to make it more likely to act on it - a result only visible with real models, not the mechanical controls.
 
-4. **Low ASR can just mean low utility.** `mistral:7b` has the lowest ASR
-   (1-6%) but also the lowest task utility (23-49%): it frequently fails the task
-   outright, so there is little behaviour left to hijack. `qwen2.5:7b-instruct`
-   is the opposite corner - highest utility (~90%) at a moderate ASR. Safety and
-   utility must be read together, never ASR alone.
+4. **Low ASR can just mean low utility.** `mistral:7b` has the lowest ASR (1-6%) but also the lowest task utility (23-49%): it frequently fails the task outright, so there is little behaviour left to hijack. `qwen2.5:7b-instruct` is the opposite corner - highest utility (~90%) at a moderate ASR. Safety and utility must be read together, never ASR alone.
 
-5. **Hidden-markup injections (F2) are largely ignored by all three models** at
-   `none` (0-5.5%), while **search poisoning (F1) and progressive contamination
-   (F4) remain effective** (F1: qwen 90%, llama 100%, mistral 56%; F4: llama
-   70%, mistral 50%). The models resist clumsy hidden instructions but still
-   trust a confident, repeated, well-ranked source.
+5. **Hidden-markup injections (F2) are largely ignored by all three models** at `none` (0-5.5%), while **search poisoning (F1) and progressive contamination (F4) remain effective** (F1: qwen 90%, llama 100%, mistral 56%; F4: llama 70%, mistral 50%). The models resist clumsy hidden instructions but still trust a confident, repeated, well-ranked source.
 
 ## 6.5 Interpreting the numbers
 
-- Rates are proportions with 95% Wilson intervals; small per-cell sizes mean wide
-  intervals. More repetitions narrow them.
-- The numbers describe the model **and** this harness's system prompt and tool
-  formatting. Both are published.
-- Lab conditions trade realism for control; the absolute rates are not
-  prevalence estimates.
-- Compare vectors and defenses **relative to each other**, not to a real-world
-  baseline.
+- Rates are proportions with 95% Wilson intervals; small per-cell sizes mean wide intervals. More repetitions narrow them.
+- The numbers describe the model **and** this harness's system prompt and tool formatting. Both are published.
+- Lab conditions trade realism for control; the absolute rates are not prevalence estimates.
+- Compare vectors and defenses **relative to each other**, not to a real-world baseline.

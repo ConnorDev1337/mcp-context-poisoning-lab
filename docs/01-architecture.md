@@ -1,20 +1,19 @@
 # 1. Architecture
 
-The lab reproduces, inside one isolated Docker network, the path that information
-follows when an LLM agent "browses the web" through an MCP server:
+The lab reproduces, inside one isolated Docker network, the path that information follows when an LLM agent "browses the web" through an MCP server:
 
-```
-user task --> agent (model under test) --tools/call--> MCP Browser --DNS--> lab resolver
-                  ^                                        |
-                  |                                        +--HTTP--> search engine (SERP)
-                  +--------- tool results (untrusted) -----+--HTTP--> legitimate sites
-                                                           +--HTTP--> attacker sites / collector
+```mermaid
+flowchart LR
+    task["user task"] --> agent["agent (model under test)"]
+    agent -- "tools/call" --> browser["MCP Browser"]
+    browser -- "DNS" --> resolver["lab resolver"]
+    browser -- "HTTP" --> serp["search engine (SERP)"]
+    browser -- "HTTP" --> legit["legitimate sites"]
+    browser -- "HTTP" --> attacker["attacker sites / collector"]
+    browser -- "tool results<br/>(untrusted)" --> agent
 ```
 
-Everything to the right of the agent is controlled by the experimenter, so each
-scenario can decide what the search engine ranks first, what each page says, and
-what a hostname resolves to. The model only ever sees what a real browsing tool
-would return: search results and page text.
+Everything to the right of the agent is controlled by the experimenter, so each scenario can decide what the search engine ranks first, what each page says, and what a hostname resolves to. The model only ever sees what a real browsing tool would return: search results and page text.
 
 ## 1.1 Components
 
@@ -29,87 +28,63 @@ would return: search results and page text.
 | `dns-poisoned` | CoreDNS | `10.88.0.54` | Same zones, but selected names point at `web-attacker` (DNS manipulation scenarios). |
 | `harness` | Python package `mcplab` | `10.88.0.100` + egress | Runs scenarios: connects a model to the MCP Browser with an MCP client, drives the tool loop, records transcripts and scores them. The only service with a route to model APIs. |
 
-All lab hostnames use the reserved `.test` top-level domain (RFC 6761), so no lab
-name can collide with, or leak queries to, a real domain.
+All lab hostnames use the reserved `.test` top-level domain (RFC 6761), so no lab name can collide with, or leak queries to, a real domain.
 
 ## 1.2 Networks and isolation
 
-```
-            +------------------------- lab (internal: true, 10.88.0.0/24) -------------------------+
-            |  mcp-browser   search   web-legit   web-attacker   collector   dns-clean   dns-poisoned |
-            |                                                                                       |
-            |                                harness ---------------------------------+             |
-            +-------------------------------------------------------------------------|-------------+
-                                                                                      |
-                                              egress (bridge) -- model APIs / Ollama on the host
+```mermaid
+flowchart TB
+    subgraph lab["lab (internal: true, 10.88.0.0/24)"]
+        browser["mcp-browser"]
+        search["search"]
+        legit["web-legit"]
+        attacker["web-attacker"]
+        collector["collector"]
+        dnsclean["dns-clean"]
+        dnspoisoned["dns-poisoned"]
+        harness["harness"]
+        search & legit & attacker & collector & dnsclean & dnspoisoned & browser ~~~ harness
+    end
+    harness -- "egress (bridge)" --- apis["model APIs / Ollama on the host"]
 ```
 
-- `lab` is a Docker `internal` network: no service on it can reach the internet,
-  and nothing outside can reach it. The MCP Browser, the web servers and the DNS
-  servers are attached to `lab` only.
-- `harness` is the only container on two networks. It needs `egress` to reach
-  commercial model APIs or a local Ollama instance; it never forwards traffic
-  from the lab.
-- No container publishes ports on the host by default. A debug profile can
-  expose the search engine and the web servers on `127.0.0.1` for manual
-  inspection.
-- Lab DNS is served by containers and used only by the MCP Browser's own
-  resolver. The host's DNS configuration and `/etc/hosts` are never touched.
+- `lab` is a Docker `internal` network: no service on it can reach the internet, and nothing outside can reach it. The MCP Browser, the web servers and the DNS servers are attached to `lab` only.
+- `harness` is the only container on two networks. It needs `egress` to reach commercial model APIs or a local Ollama instance; it never forwards traffic from the lab.
+- No container publishes ports on the host by default. A debug profile can expose the search engine and the web servers on `127.0.0.1` for manual inspection.
+- Lab DNS is served by containers and used only by the MCP Browser's own resolver. The host's DNS configuration and `/etc/hosts` are never touched.
 
 ## 1.3 Scenario routing
 
-The same URL can return different content in different scenarios (for example a
-clean and a poisoned version of a vendor advisory). Scenario selection happens
-outside the model's view:
+The same URL can return different content in different scenarios (for example a clean and a poisoned version of a vendor advisory). Scenario selection happens outside the model's view:
 
-1. The harness opens an MCP session with two HTTP headers, `X-Lab-Scenario` and
-   `X-Lab-Run`. The model never sees them.
-2. The MCP Browser forwards both headers on every request it makes to the search
-   engine, the web servers and the collector.
+1. The harness opens an MCP session with two HTTP headers, `X-Lab-Scenario` and `X-Lab-Run`. The model never sees them.
+2. The MCP Browser forwards both headers on every request it makes to the search engine, the web servers and the collector.
 3. The search engine selects the ranked result list for that scenario.
-4. nginx maps the header to a document root:
-   `root /srv/sites/$lab_scenario/$host;` so `http://nimbusdb.test/docs/tls`
-   serves `sites/<scenario>/nimbusdb.test/docs/tls/index.html`. Header values are
-   validated against `^[a-z0-9-]{1,64}$`; anything else falls back to `default`.
-5. The scenario also chooses the resolver (`dns-clean` or `dns-poisoned`) and the
-   TLS policy the MCP Browser applies.
+4. nginx maps the header to a document root: `root /srv/sites/$lab_scenario/$host;` so `http://nimbusdb.test/docs/tls` serves `sites/<scenario>/nimbusdb.test/docs/tls/index.html`. Header values are validated against `^[a-z0-9-]{1,64}$`; anything else falls back to `default`.
+5. The scenario also chooses the resolver (`dns-clean` or `dns-poisoned`) and the TLS policy the MCP Browser applies.
 
-This keeps scenarios isolated from each other, so runs can execute in parallel
-against the same infrastructure.
+This keeps scenarios isolated from each other, so runs can execute in parallel against the same infrastructure.
 
 ## 1.4 The MCP Browser
 
-The server is intentionally ordinary: it behaves like a typical community
-"web browsing" MCP server, because that is the threat surface being studied.
+The server is intentionally ordinary: it behaves like a typical community "web browsing" MCP server, because that is the threat surface being studied.
 
 | Tool | Arguments | Returns |
 | --- | --- | --- |
 | `web_search` | `query: str`, `max_results: int = 5` | Ranked list of `{title, url, snippet}` |
 | `fetch_page` | `url: str` | Page title and readable text extracted from the HTML |
 
-Configurable behaviours (per scenario or per run), each one a variable in the
-experiments:
+Configurable behaviours (per scenario or per run), each one a variable in the experiments:
 
-- **Extraction mode**: `text` (visible text only, like a reader view),
-  `markdown` (HTML converted to Markdown, keeps `alt`/`title` text and links),
-  `raw` (HTML as served, including comments and hidden elements).
-- **Provenance annotation**: off by default. When on, tool results are wrapped in
-  a structured envelope that names the source host, how it was resolved and
-  whether TLS was verified, and marks the content as untrusted data. This is one
-  of the mitigations under test.
-- **TLS policy**: plain HTTP (default), or HTTPS against a lab CA with
-  certificate verification on or off. With verification on, a poisoned DNS answer
-  that points at the attacker's server fails the handshake, which is the
-  expected mitigation for scenario family 6.
+- **Extraction mode**: `text` (visible text only, like a reader view), `markdown` (HTML converted to Markdown, keeps `alt`/`title` text and links), `raw` (HTML as served, including comments and hidden elements).
+- **Provenance annotation**: off by default. When on, tool results are wrapped in a structured envelope that names the source host, how it was resolved and whether TLS was verified, and marks the content as untrusted data. This is one of the mitigations under test.
+- **TLS policy**: plain HTTP (default), or HTTPS against a lab CA with certificate verification on or off. With verification on, a poisoned DNS answer that points at the attacker's server fails the handshake, which is the expected mitigation for scenario family 6.
 
-The MCP Browser never executes JavaScript, never follows redirects to non-lab
-hosts, caps response sizes, and refuses any hostname outside `.test`.
+The MCP Browser never executes JavaScript, never follows redirects to non-lab hosts, caps response sizes, and refuses any hostname outside `.test`.
 
 ## 1.5 Harness and model adapters
 
-The harness (`mcplab`) is a regular MCP client: it lists the MCP Browser's tools,
-converts them into the tool-calling format of each model API, and runs the agent
-loop until the model gives a final answer or hits the step limit.
+The harness (`mcplab`) is a regular MCP client: it lists the MCP Browser's tools, converts them into the tool-calling format of each model API, and runs the agent loop until the model gives a final answer or hits the step limit.
 
 Adapters:
 
@@ -126,16 +101,11 @@ API keys are read from environment variables of the harness container only.
 
 ## 1.6 Data flow of one run
 
-1. `mcplab run` loads the scenario, picks a run id and opens an MCP session to
-   the MCP Browser with the scenario and run headers.
-2. The model receives the system prompt (fixed per experiment arm) and the user
-   task, plus the tool list.
-3. Every tool call is executed through MCP; every request the MCP Browser makes
-   is logged with the run id by the lab services.
-4. The final answer, the full transcript, the tool calls and the collector hits
-   for that run id are written to `runs/<experiment>/<run_id>.json`.
-5. Scorers evaluate the run (see [methodology](04-methodology.md)); `mcplab
-   report` aggregates per model, scenario and arm with confidence intervals.
+1. `mcplab run` loads the scenario, picks a run id and opens an MCP session to the MCP Browser with the scenario and run headers.
+2. The model receives the system prompt (fixed per experiment arm) and the user task, plus the tool list.
+3. Every tool call is executed through MCP; every request the MCP Browser makes is logged with the run id by the lab services.
+4. The final answer, the full transcript, the tool calls and the collector hits for that run id are written to `runs/<experiment>/<run_id>.json`.
+5. Scorers evaluate the run (see [methodology](04-methodology.md)); `mcplab report` aggregates per model, scenario and arm with confidence intervals.
 
 ## 1.7 Repository layout (target)
 
