@@ -1,12 +1,10 @@
 # MCP Context Poisoning Lab
 
+[![M8ven Score](https://m8ven.ai/badge/mcp/connordev1337-mcp-context-poisoning-lab-1gmx52?v=46c7f356814261306ea26c9b0fc7ee8e)](https://m8ven.ai/mcp/connordev1337-mcp-context-poisoning-lab-1gmx52?s=readme)
+
 **A reproducible lab that measures how an LLM agent treats content returned by an untrusted web-browsing MCP server - and which trust boundaries actually stop the attack without breaking the task.**
 
-> Research question: *When an agent "browses the web" through an MCP tool, does it
-> keep the line between the user's instructions and third-party data - across
-> search poisoning, indirect prompt injection, fake authority, contradictory and
-> progressively contaminated sources, name-resolution hijacking, and a malicious
-> MCP server itself?*
+> Research question: *When an agent "browses the web" through an MCP tool, does it keep the line between the user's instructions and third-party data - across search poisoning, indirect prompt injection, fake authority, contradictory and progressively contaminated sources, name-resolution hijacking, and a malicious MCP server itself?*
 
 This is an [indirect prompt-injection](https://owasp.org/www-project-top-10-for-large-language-model-applications/) measurement harness focused on the **MCP browsing** path. It is adjacent to [AgentDojo](https://github.com/ethz-spylab/agentdojo) and to the sibling project [web-agent-injection-bench](https://github.com/ConnorDev1337/web-agent-injection-bench); its angle is the full information path of an MCP web tool - search ranking, page content and metadata, name resolution and TLS, and the tool's own description.
 
